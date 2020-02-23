@@ -4,4 +4,4 @@ download random screenshots from prnt.sc (C#, console)
 - prnt.sc's urls contain 6 characters (ASCII lowercase & numbers, e.g. https://prnt.sc/qwe123)
 - if the downloaded image is the "The screenshot was removed" image it will be disposed
 
-<img src="preview.png" width="1152" height="806">
+<img src="preview.png" width="718" height="442">
