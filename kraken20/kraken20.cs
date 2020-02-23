@@ -8,30 +8,25 @@ using System.Web;
 using System.Drawing;
 using System.IO;
 using System.Threading;
+using System.Collections;
 
 namespace kraken20
 {
     class kraken20
     {
-        private static readonly char[] Numerals = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-        private static readonly char[] AlphabetLower = new char[] { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
-        private static readonly char[] AlphabetUpper = new char[] { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' };
-
-        //we are using this VVV
         private static char[] chars = new char[] { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
         
         static int Main(string[] args)
         {
-            Console.WriteLine("> This program will download screenshots (from https://prnt.sc) by random...");
-            Console.WriteLine("> Ignore Image(.png): \"The screenshot was removed\"");
-            Console.WriteLine("Chars....: ASCII lower + numbers");
-            Console.WriteLine("Author...: C0LD");
-            Console.WriteLine("URL EX.: https://prnt.sc/ + 6 random chars");
+            Console.WriteLine("This program will download screenshots (from https://prnt.sc) by random...");
+            Console.WriteLine("Ignore Image: \"The screenshot was removed\".png");
+            Console.WriteLine("Chars: ASCII lower + numbers");
+            Console.WriteLine("Author: 0xC0LD");
+            Console.WriteLine("URL E.G.: https://prnt.sc/asd123");
             Console.WriteLine("");
-            Console.WriteLine("starting while(true) loop...");
-            Console.WriteLine("");
-            Console.WriteLine("");
-            
+
+            Hashtable hashtable = new Hashtable();
+
             while (true)
             {
                 try
@@ -46,12 +41,15 @@ namespace kraken20
                         + chars[rm.Next(0, chars.Length - 1)]
                         + chars[rm.Next(0, chars.Length - 1)]
                         + chars[rm.Next(0, chars.Length - 1)]
-                   ;
+                    ;
 
-
-                    download_ss(url);
+                    if (!hashtable.Contains(url))
+                    {
+                        hashtable.Add(url, url);
+                        download_ss(url);
+                    }
                 }
-                catch(Exception) { }
+                catch(Exception e) { Console.WriteLine(e.Message);  }
             }
         }
         
@@ -62,42 +60,24 @@ namespace kraken20
 
             foreach (string link in get_html_all(new Uri(url), wc.DownloadData(url)))
             {
-                if (Uri.IsWellFormedUriString(link, UriKind.Absolute))
+                if (string.IsNullOrEmpty(link)) { continue; }
+                if (!Uri.IsWellFormedUriString(link, UriKind.Absolute)) { continue; }
+                if (!link.Contains(".png")) { continue; }
+                if (link.Contains("favicon")) { continue; }
+                if (link.Contains("footer-logo.png")) { continue; }
+                if (link.Contains("icon")) { continue; }
+                if (link.Contains("searchbyimage")) { continue; }
+
+                string name = GetURLFilename(url);
+                byte[] bytes = wc.DownloadData(link);
+
+                Bitmap bmp;
+                using (var ms = new MemoryStream(bytes)) { bmp = new Bitmap(ms); }
+
+                if (!compare(bmp, Properties.Resources.ignore))
                 {
-                    if (!link.Contains("favicon"))
-                    {
-                        if (link.Contains(".png"))
-                        {
-                            if (!link.Contains("footer-logo.png"))
-                            {
-                                if (!link.Contains("icon"))
-                                {
-                                    if (!link.Contains("searchbyimage"))
-                                    {
-                                        if (!string.IsNullOrEmpty(link))
-                                        {
-                                            string name = get_filename(url);
-                                            byte[] bytes = wc.DownloadData(link);
-
-                                            Bitmap bmp;
-                                            using (var ms = new MemoryStream(bytes))
-                                            {
-                                                bmp = new Bitmap(ms);
-                                            }
-
-                                            if (!compare(bmp, Properties.Resources.ignore))
-                                            {
-                                                Console.WriteLine(url + ": " + link + " -> " + name);
-                                                File.WriteAllBytes(name, bytes);
-                                            }
-
-                                            
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    Console.WriteLine(url + " -> " + link + " -> " + name);
+                    File.WriteAllBytes(name, bytes);
                 }
             }
         }
@@ -134,16 +114,10 @@ namespace kraken20
             return equals;
         }
 
-        private static string get_filename(string url)
+        private static string GetURLFilename(string url)
         {
             string[] index = url.Split('/');
-            string name = time();
-
-            for(int i = 0; i <= index.Length - 1; i++)
-            {
-                name = index[i];
-            }
-
+            string name = index[index.Length - 1];
             return name + ".png";
         }
 
